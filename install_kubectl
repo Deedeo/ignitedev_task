@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Determine system architecture
+arch=$(uname -m)
+
+# Define download URL based on architecture
+if [ "$arch" == "x86_64" ]; then
+    download_url="https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+elif [ "$arch" == "aarch64" ]; then
+    download_url="https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+else
+    echo "Unsupported architecture: $arch"
+    exit 1
+fi
+
+# Download kubectl binary
+echo "Downloading kubectl binary..."
+curl -LO "$download_url"
+
+# Download checksum file
+echo "Downloading checksum file..."
+curl -LO "$download_url.sha256"
+
+# Validate the binary
+echo "Validating the binary..."
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+
+# Install kubectl
+echo "Installing kubectl..."
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Test kubectl installation
+echo "Testing kubectl installation..."
+kubectl version --client
